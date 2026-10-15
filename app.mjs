@@ -31,7 +31,7 @@ function validateSession(s) {
     if (!ex || typeof ex.name !== 'string' || !ex.name.trim() || ex.name.length > 100 || !KINDS.includes(ex.kind) || !Array.isArray(ex.sets) || !ex.sets.length || ex.sets.length > 200) throw Error('Each exercise needs a name and at least one set.');
     for (const set of ex.sets) {
       if (!set || typeof set !== 'object') throw Error('Invalid exercise set.');
-      for (const {key} of rowFields(ex.kind)) {
+      for (const key of (ex.kind === 'strength' ? ['reps','weight'] : ex.kind === 'rounds' ? ['rounds','minutes'] : ex.kind === 'cardio' ? ['minutes','distance'] : ['minutes','effort'])) {
         const v = set[key];
         if (v != null && (!Number.isFinite(v) || v < 0 || v > 100000)) throw Error('Invalid exercise numbers.');
       }
