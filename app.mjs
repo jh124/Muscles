@@ -103,7 +103,7 @@ function setPage(page) {
   if (page === 'history') renderHistory();
   if (page === 'progress') renderProgress();
   if (page === 'log') renderLast();
-  window.scrollTo({top:0,behavior:'instant'});
+  window.scrollTo(0,0);
 }
 function readNum(value) { return value === '' ? null : Number(value); }
 function createSetRow(kind, set, index) {
@@ -221,7 +221,7 @@ function renderHistory() {
   $('month-time').textContent = format(recent.reduce((a,s) => a + num(s.duration),0),0);
   const filter = $('history-filter').value;
   const selected = sessions.filter(s => filter === 'All' || s.category === filter);
-  $('history-list').innerHTML = selected.length ? selected.map(s => '<article class="workout-row"><div class="workout-row-top"><div><h3>' + escapeHTML(s.title || s.category + ' workout') + '</h3><div class="workout-sub">' + escapeHTML(dateLabel(s.date)) + ' · ' + escapeHTML(summary(s)) + '</div><div class="workout-meta"><span class="tag">' + escapeHTML(s.category) + '</span></div></div><div class="row-menu"><button type="button" class="icon-button menu-trigger" aria-label="Actions for workout" aria-expanded="' + (menuId === s.id) + '" data-action="menu" data-id="' + escapeHTML(s.id) + '">⋮</button>' + (menuId === s.id ? '<div class="popup-menu"><button type="button" data-action="edit" data-id="' + escapeHTML(s.id) + '">Edit</button><button type="button" class="destructive" data-action="delete" data-id="' + escapeHTML(s.id) + '">Delete</button></div>' : '') + '</div></div><div class="workout-detail">' + details(s) + '</div>' + (s.notes ? '<p class="workout-note">' + escapeHTML(s.notes) + '</p>' : '') + '</article>').join('') : '<div class="empty">No workouts here yet.</div>';
+  $('history-list').innerHTML = selected.length ? selected.map(s => '<article class="workout-row"><div class="workout-row-top"><div><h3>' + escapeHTML(s.title || s.category + ' workout') + '</h3><div class="workout-sub">' + escapeHTML(dateLabel(s.date)) + ' · ' + escapeHTML(summary(s)) + '</div><div class="workout-meta"><span class="tag">' + escapeHTML(s.category) + '</span></div></div><div class="row-menu"><button type="button" class="icon-button menu-trigger" aria-label="Actions for workout" aria-expanded="' + (menuId === s.id) + '" data-action="menu" data-id="' + escapeHTML(s.id) + '">⋮</button>' + (menuId === s.id ? '<div class="popup-menu"><button type="button" data-action="repeat" data-id="' + escapeHTML(s.id) + '">Repeat</button><button type="button" data-action="edit" data-id="' + escapeHTML(s.id) + '">Edit</button><button type="button" class="destructive" data-action="delete" data-id="' + escapeHTML(s.id) + '">Delete</button></div>' : '') + '</div></div><div class="workout-detail">' + details(s) + '</div>' + (s.notes ? '<p class="workout-note">' + escapeHTML(s.notes) + '</p>' : '') + '</article>').join('') : '<div class="empty">No workouts here yet.</div>';
 }
 function startEdit(id) {
   const session = state.sessions.find(s => s.id === id);
@@ -229,6 +229,15 @@ function startEdit(id) {
   editingId = session.id; menuId = '';
   setForm(session);
   setPage('log');
+}
+function startRepeat(id) {
+  const session = state.sessions.find(s => s.id === id);
+  if (!session) return;
+  menuId = ''; editingId = '';
+  const copy = JSON.parse(JSON.stringify(session));
+  copy.date = today(); copy.notes = '';
+  copy.exercises.forEach(ex => ex.id = makeId());
+  setForm(copy); persistDraft(); setPage('log'); toast('Workout copied. Adjust and save.');
 }
 function stopEdit() {
   editingId = '';
@@ -419,7 +428,7 @@ function init() {
       const workout=validateSession({...draft,id:old?.id||makeId(),createdAt:old?.createdAt||now,updatedAt:now});
       if(old)state.sessions=state.sessions.map(s=>s.id===old.id?workout:s);
       else state.sessions.push(workout);
-      persist();editingId='';localStorage.removeItem(DRAFT_KEY);setForm(blank());
+      persist();editingId='';if (!old) localStorage.removeItem(DRAFT_KEY);setForm(old ? recoverDraft() : blank());
       refreshSuggestions();renderLast();renderHistory();setProgressOptions();renderProgress();
       toast(old?'Workout updated':'Workout saved');setPage('history');
     }catch(error){toast(error.message||'Check your workout entries.');}
@@ -430,6 +439,7 @@ function init() {
     const action=e.target.closest('[data-action]');if(!action)return;
     const id=action.dataset.id;
     if(action.dataset.action==='menu'){menuId=menuId===id?'':id;renderHistory();}
+    if(action.dataset.action==='repeat')startRepeat(id);
     if(action.dataset.action==='edit')startEdit(id);
     if(action.dataset.action==='delete')deleteWorkout(id);
   });
