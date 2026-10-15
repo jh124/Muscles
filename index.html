@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5ef">
+  <meta name="description" content="Log workouts, track exercises and see your progress. A companion to Daily.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>Muscles · Workout Tracker</title>
+  <script>try{const p=JSON.parse(localStorage.getItem('muscles-v1')||'{}');if(p.preferences&&p.preferences.theme==='dark')document.documentElement.dataset.theme='dark'}catch{}</script>
+  <link rel="stylesheet" href="./style.css?v=1">
+  <script type="module" src="./app.mjs?v=1"></script>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="mark">m.</span><span>muscles<span class="brand-dot">.</span></span></div>
+    <div class="header-actions"><button id="unit-toggle" class="round-control unit-control" aria-label="Switch weight units" title="Switch weight units">lb</button><button id="theme-toggle" class="round-control" aria-label="Toggle dark mode" title="Toggle dark mode"><span aria-hidden="true">☾</span></button></div>
+  </header>
+
+  <section id="log-page" class="page">
+    <div class="page-intro"><h1 id="form-heading">Log workout</h1><p>Show up. Put in the work. Keep the record.</p></div>
+    <section class="card">
+      <form id="workout-form" novalidate>
+        <div class="form-grid"><label>Date<input id="workout-date" type="date" required></label><label>Workout type<select id="workout-category"><option>Strength</option><option>Boxing</option><option>Cardio</option><option>Mixed</option><option>Other</option></select></label></div>
+        <label class="spaced">Workout name <span class="muted">(optional)</span><input id="workout-title" maxlength="100" placeholder="Evening training"></label>
+        <label class="spaced">Duration <span class="muted">(optional)</span><div class="input-unit"><input id="workout-duration" type="number" inputmode="decimal" min="0" max="1440" step="any" placeholder="0"><span>min</span></div></label>
+        <div class="section-header exercise-heading"><h2>Exercises</h2><button type="button" id="add-exercise" class="text-button">＋ Add exercise</button></div>
+        <div id="exercise-list"></div>
+        <p id="exercise-help" class="helper">Add an exercise to log reps, weight, rounds, time, or distance.</p>
+        <label class="spaced">Notes <span class="muted">(optional)</span><textarea id="workout-notes" rows="3" maxlength="3000" placeholder="How did it go?"></textarea></label>
+        <button class="primary" id="save-workout" type="submit">Save workout</button>
+        <button class="quiet wide" id="cancel-edit" type="button" hidden>Cancel editing</button>
+      </form>
+    </section>
+    <section class="card overview-card"><div class="section-header"><h2>Last workout</h2><button class="text-button" id="view-history" type="button">View history →</button></div><div id="last-workout" class="empty">No workouts yet. Your first one starts here.</div></section>
+    <p class="sister-link">Also tracking nutrition? <a href="https://jh124.github.io/Daily/" target="_blank" rel="noopener noreferrer">Open Daily ↗</a></p>
+  </section>
+
+  <section id="history-page" class="page" hidden>
+    <div class="page-intro"><h1>History</h1><p>Every session counts.</p></div>
+    <div class="stat-grid">
+      <div class="stat accent"><span>Last 30 days</span><strong id="month-count">0</strong><small>workouts</small></div>
+      <div class="stat surface"><span>Training time</span><strong id="month-time">0</strong><small>logged minutes · 30 days</small></div>
+    </div>
+    <section class="card"><div class="section-header"><h2>Workouts</h2><select id="history-filter" aria-label="Filter workouts"><option value="All">All types</option><option>Strength</option><option>Boxing</option><option>Cardio</option><option>Mixed</option><option>Other</option></select></div><div id="history-list"></div></section>
+  </section>
+
+  <section id="progress-page" class="page" hidden>
+    <div class="page-intro"><h1>Progress</h1><p>The work adds up.</p></div>
+    <div class="stat-grid">
+      <div class="stat accent"><span>All-time workouts</span><strong id="all-count">0</strong><small>sessions logged</small></div>
+      <div class="stat surface"><span>Last 7 days</span><strong id="week-count">0</strong><small>workouts</small></div>
+    </div>
+    <section class="card">
+      <div class="section-header"><h2>Exercise progress</h2></div>
+      <label>Exercise<select id="progress-exercise"><option value="">No exercises logged yet</option></select></label>
+      <div class="form-grid progress-controls"><label>Metric<select id="progress-metric"></select></label><label>Period<select id="progress-range"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option><option value="all" selected>All time</option></select></label></div>
+      <div id="progress-summary" class="progress-summary"></div>
+      <div id="progress-chart" class="chart"></div>
+      <div id="progress-records" class="record-list"></div>
+    </section>
+    <section class="card"><div class="section-header"><h2>Training mix</h2><span class="muted">Last 30 days</span></div><div id="training-mix"></div></section>
+  </section>
+  <p class="version">Muscles · v1</p>
+</main>
+
+<nav class="bottom-nav" aria-label="Pages"><span id="nav-pill"></span><button data-page="log" class="active" aria-current="page">Workout</button><button data-page="history">History</button><button data-page="progress">Progress</button></nav>
+<div class="data-tools"><div id="data-menu" hidden><h3>Your data</h3><button id="export-data" type="button">↓ Export JSON backup</button><button id="import-data" type="button">↑ Import JSON backup</button><p>Saved on this device only. Back up regularly.</p></div><button id="data-toggle" type="button" aria-label="Import and export data" aria-expanded="false">⇅</button><input type="file" id="file-input" accept=".json,application/json" hidden></div>
+<dialog id="confirm-dialog"><h2 id="confirm-heading">Delete workout?</h2><p id="confirm-message">This can't be undone.</p><div class="dialog-actions"><button type="button" class="quiet" id="confirm-cancel">Cancel</button><button type="button" class="danger" id="confirm-yes">Delete</button></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<datalist id="exercise-suggestions"></datalist>
+</body>
+</html>
